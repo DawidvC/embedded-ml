@@ -1,0 +1,30 @@
+\ (c) 2006 Johns Hopkins University / Applied Physics Laboratory
+\ Low-level clock interface
+hex
+
+\ ------------------------------------------------------------------------
+\ Constants
+
+10000c	 constant timer-mem#		\ W: timer counter
+d#  2	 constant rtc-int#		\ timer interrupt
+
+d# 50000 constant clks/s#		\ clocks per second
+d#   100 constant ints/s#		\ interrupts per second
+
+\ ------------------------------------------------------------------------
+\ Clock
+
+variable hardwareclock			\ semaphore signalled each interrupt
+variable numticks
+
+rtc-int# int:	\ ( -- ) Interrupt fixed rate.
+   numticks @ 1+ numticks !
+   hardwareclock signal ;int
+
+: init-clock	\ ( -- ) Start timer interrupt.
+   0 numticks !
+   clks/s# ints/s# / 1- timer-mem# w!
+   rtc-int# get-mask unmask-int ;
+
+: seconds	\ ( secs -- ticks ) Convert seconds to ticks (interrutps).
+   ints/s# * ;
